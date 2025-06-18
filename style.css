@@ -1,0 +1,218 @@
+body {
+    font-family: Arial, sans-serif;
+    max-width: 700px;
+    margin: 30px auto;
+    padding: 20px;
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+}
+.container {
+    background-color: #2a2a2a;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+h1 {
+    color: #f0f0f0;
+    text-align: center;
+    margin-bottom: 10px;
+}
+.subtitle {
+    text-align: center;
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+.remote-timer-update {
+    background-color: #1a3a4d;
+    border: 2px solid #2a5a7d;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+.remote-timer-update h2 {
+    margin-top: 0;
+    color: #7fd4ff;
+    font-size: 20px;
+}
+.remote-range {
+    font-size: 28px;
+    font-weight: bold;
+    color: #7fd4ff;
+    margin: 15px 0;
+}
+.remote-info {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 10px;
+}
+.remote-offline {
+    color: #c44444;
+    font-style: italic;
+}
+.input-group {
+    margin: 20px 0;
+}
+label {
+    display: block;
+    margin-bottom: 5px;
+    color: #b0b0b0;
+}
+input, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #444;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 16px;
+    background-color: #3a3a3a;
+    color: #e0e0e0;
+}
+input:focus, select:focus {
+    outline: none;
+    border-color: #5a9fd4;
+}
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: #4a7c94;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+button:hover {
+    background-color: #5a9fd4;
+}
+button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+.results {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #353535;
+    border-radius: 5px;
+    border: 1px solid #444;
+}
+.range {
+    text-align: center;
+    color: #6ac5f7;
+    margin: 20px 0;
+    font-size: 24px;
+    font-weight: bold;
+    padding: 15px;
+    background-color: #2a3f4d;
+    border-radius: 8px;
+    border: 2px solid #4a7c94;
+}
+.helpful-ranges {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #2a3f4d;
+    border-radius: 8px;
+    border: 1px solid #3a5f7d;
+}
+.helpful-ranges h3 {
+    margin-top: 0;
+    color: #6ac5f7;
+    font-size: 16px;
+}
+.range-item {
+    padding: 8px;
+    margin: 5px 0;
+    background-color: #1a2a35;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #a0c5e0;
+}
+.range-highlight {
+    color: #7fd4ff;
+    font-weight: bold;
+}
+#live-timer {
+    font-weight: normal;
+    font-size: 0.9em;
+    color: #aaa;
+    margin-left: 10px;
+    font-style: italic;
+}
+.observations {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #b0b0b0;
+    padding: 15px;
+    background-color: #2a3f4d;
+    border-radius: 8px;
+    border: 1px solid #3a5f7d;
+}
+.observations h3 {
+    margin-top: 0;
+    color: #6ac5f7;
+    font-size: 16px;
+}
+.observation-item {
+    padding: 10px;
+    margin: 5px 0;
+    background-color: #2a2a2a;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.observation-text {
+    flex: 1;
+}
+.remove-btn {
+    background-color: #c44444;
+    padding: 5px 10px;
+    font-size: 12px;
+    width: auto;
+    margin-left: 10px;
+}
+.remove-btn:hover {
+    background-color: #d66666;
+}
+.reset-btn {
+    background-color: #c44444;
+    margin-top: 10px;
+}
+.reset-btn:hover {
+    background-color: #d66666;
+}
+.info {
+    background-color: #2a3f4d;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #a0c5e0;
+    border: 1px solid #3a5f7d;
+}
+.no-help {
+    color: #888;
+    font-style: italic;
+    text-align: center;
+    padding: 10px;
+}
+.unhelpful-warning {
+    background-color: #3a2a1a;
+    border: 1px solid #5a3a2a;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    color: #daa520;
+    font-size: 13px;
+}
+.debug-info {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #1a1a1a;
+    border-radius: 5px;
+    font-size: 12px;
+    color: #888;
+    font-family: monospace;
+} 

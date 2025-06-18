@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shooting Star Timer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Shooting Star Timer</h1>
+        
+        <div class="disclaimer" style="margin: 15px 0; text-align: center; font-size: 0.9em; color: #666;">
+            <strong>Disclaimer:</strong> An error of about 1% should be expected from any time estimation provided by the tool, remote or local.
+        </div>
+        
+        <!-- Remote timer section -->
+        <div class="remote-timer-update" id="remoteTimerUpdate">
+            <h2>Remote Timer</h2>
+            <div id="remoteContent">
+                <div class="remote-offline">No remote data available</div>
+            </div>
+            <div class="remote-info">
+                Estimation provided by Damighty when online<br>
+                <span id="lastUpdate"></span>
+            </div>
+        </div>
+        
+        <div class="local-timer">
+            <h2>Local Timer</h2>
+            <div class="info">
+                <strong>How it works:</strong> Enter the time shown by the telescope. Each reading helps narrow down the actual time. The tool shows which future readings would help improve the prediction.
+            </div>
+            
+            <div class="input-group">
+                <label for="telescopeType">Telescope Type:</label>
+                <select id="telescopeType">
+                    <option value="24">Wooden (±24 minutes)</option>
+                    <option value="9" selected>Teak (±9 minutes)</option>
+                    <option value="2">Mahogany (±2 minutes)</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="telescopeTime">Telescope Reading (minutes):</label>
+                <input type="number" id="telescopeTime" placeholder="Enter time shown by telescope">
+            </div>
+            
+            <button id="addBtn" onclick="addObservation()">Add Observation</button>
+            <button class="reset-btn" onclick="resetObservations()">Reset All</button>
+            
+            <div id="results" class="results" style="display: none;">
+                <h2 style="text-align: center; margin-top: 0;">Your Predicted Time Range</h2>
+                <div class="range" id="range">--</div>
+                
+                <div class="helpful-ranges" id="helpfulRanges">
+                    <h3>Helpful Future Observations:</h3>
+                    <div id="helpfulRangesList"></div>
+                </div>
+            </div>
+
+            <div class="observations">
+                <h3>Your Observations <span id="live-timer"></span></h3>
+                <div id="observationsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
