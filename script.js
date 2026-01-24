@@ -1,13 +1,7 @@
 let observations = [];
 let startTime = null;
 let isProcessing = false;
-
-// Inherent timing error from tick-based system
-// - Integer rounding: up to 0.5 min
-// - Tick alignment (0.6s = 0.01min): up to 0.01 min
-// Combined: ~0.51 minutes
-const TICK_ERROR = 0.51;
-
+   
 // Fetch remote timer data
 async function fetchRemoteData() {
     try {
@@ -57,14 +51,9 @@ function addObservation() {
     const telescopeType = document.getElementById('telescopeType');
     const value = parseInt(input.value);
     const accuracy = parseInt(telescopeType.value);
-
+    
     if (isNaN(value)) {
         alert('Please enter a valid time');
-        return;
-    }
-
-    if (Math.abs(value) > 200) {
-        alert("Reading seems unrealistic");
         return;
     }
     
@@ -128,7 +117,7 @@ function calculateHelpfulRanges(minPossible, maxPossible) {
     // If actual time is maxPossible, telescope shows: maxPossible + [-A, +A]
     // So possible telescope readings: [minPossible-A, maxPossible+A]
     
-    const minPossibleReading = minPossible - currentAccuracy;
+    const minPossibleReading = Math.max(0, minPossible - currentAccuracy);
     const maxPossibleReading = maxPossible + currentAccuracy;
     
     // For a reading R to narrow our estimate:
@@ -226,44 +215,26 @@ function updatePrediction() {
     
     observations.forEach((obs, index) => {
         const adjusted = adjustedObservations[index];
-        const obsMin = adjusted - obs.accuracy - TICK_ERROR;
-        const obsMax = adjusted + obs.accuracy + TICK_ERROR;
+        const obsMin = adjusted - obs.accuracy;
+        const obsMax = adjusted + obs.accuracy;
         minPossible = Math.max(minPossible, obsMin);
         maxPossible = Math.min(maxPossible, obsMax);
     });
     
+    // Ensure we don't have negative ranges
+    minPossible = Math.max(0, minPossible);
+    maxPossible = Math.max(0, maxPossible);
+    
     // If ranges don't overlap properly, show the midpoint
     if (minPossible > maxPossible) {
-        document.getElementById('range').textContent = "Conflicting observations - ranges don't overlap";
-        document.getElementById('helpfulRangesList').innerHTML = '<div class="no-help">Cannot calculate helpful ranges with conflicting observations</div>';
-        // Observations remain editable, timer continues updating
-        // Update observations list only
-        const currentTime = Date.now();
-        const totalElapsed = (currentTime - startTime) / 1000 / 60;
-        const adjustedObservations = observations.map(obs => {
-            const timeSinceObs = totalElapsed - obs.elapsedMinutes;
-            return obs.observedTime - timeSinceObs;
-        });
-        const listHtml = observations.map((obs, index) => {
-            const adjusted = adjustedObservations[index];
-            const timeLabel = obs.elapsedMinutes < 0.05 ? 'T=0' : `T+${obs.elapsedMinutes.toFixed(1)} min`;
-            return `<div class="observation-item">
-                    <div class="observation-text">
-                        Observation ${index + 1}: ${obs.observedTime} min
-                        (${obs.telescopeType}, ${timeLabel})
-                    </div>
-                    <button class="remove-btn" onclick="removeObservation(${index})">Remove</button>
-                </div>`;
-        }).join('');
-        document.getElementById('observationsList').innerHTML = listHtml;
-        return;
+        const mid = (minPossible + maxPossible) / 2;
+        minPossible = mid;
+        maxPossible = mid;
     }
-
+    
     // Display results
     document.getElementById('results').style.display = 'block';
-    const displayMin = Math.max(0, minPossible);
-    const displayMax = Math.max(0, maxPossible);
-    document.getElementById('range').textContent = `${displayMin.toFixed(1)} - ${displayMax.toFixed(1)} minutes`;
+    document.getElementById('range').textContent = `${minPossible.toFixed(1)} - ${maxPossible.toFixed(1)} minutes`;
     
     // Calculate and display helpful ranges
     const helpfulRanges = calculateHelpfulRanges(minPossible, maxPossible);

@@ -1,294 +1,218 @@
-/* 2008-2009 Web Aesthetic - No Modern CSS */
-
-/* Body */
 body {
-    background-color: #C0C0C0;
-    font-family: "Times New Roman", Times, serif;
-    font-size: 12pt;
-    margin: 0;
+    font-family: Arial, sans-serif;
+    max-width: 700px;
+    margin: 30px auto;
     padding: 20px;
+    background-color: #1a1a1a;
+    color: #e0e0e0;
 }
-
-/* Container */
 .container {
-    background-color: transparent;
-    padding: 0;
+    background-color: #2a2a2a;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
-
-/* Headers */
-h1, h2, h3 {
-    font-family: "Times New Roman", Times, serif;
-    color: #000080;
-    margin: 10px 0;
-}
-
 h1 {
+    color: #f0f0f0;
     text-align: center;
     margin-bottom: 10px;
 }
-
 .subtitle {
     text-align: center;
-    color: #666666;
+    color: #888;
     font-size: 14px;
     margin-bottom: 20px;
 }
-
-/* Remote Timer Section */
 .remote-timer-update {
-    background-color: #FFFFCC;
-    border: 2px solid #000080;
-    padding: 10px;
+    background-color: #1a3a4d;
+    border: 2px solid #2a5a7d;
+    padding: 20px;
+    border-radius: 10px;
     margin-bottom: 20px;
     text-align: center;
 }
-
 .remote-timer-update h2 {
     margin-top: 0;
-    color: #000080;
+    color: #7fd4ff;
     font-size: 20px;
 }
-
 .remote-range {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: bold;
-    color: #000080;
+    color: #7fd4ff;
     margin: 15px 0;
 }
-
 .remote-info {
-    font-size: 11px;
-    color: #666666;
+    font-size: 12px;
+    color: #aaa;
     margin-top: 10px;
 }
-
 .remote-offline {
-    color: #CC0000;
+    color: #c44444;
     font-style: italic;
 }
-
-/* Input Group */
 .input-group {
     margin: 20px 0;
 }
-
 label {
     display: block;
     margin-bottom: 5px;
-    color: #000000;
-    font-family: "Times New Roman", Times, serif;
+    color: #b0b0b0;
 }
-
-/* Inputs - 2008 Inset Style */
 input, select {
     width: 100%;
-    border: 2px inset #FFFFFF;
-    background-color: #FFFFFF;
-    font-family: Arial, sans-serif;
-    font-size: 12px;
-    padding: 3px;
+    padding: 10px;
+    border: 1px solid #444;
+    border-radius: 5px;
     box-sizing: border-box;
+    font-size: 16px;
+    background-color: #3a3a3a;
+    color: #e0e0e0;
 }
-
 input:focus, select:focus {
-    outline: 1px dotted #000000;
+    outline: none;
+    border-color: #5a9fd4;
 }
-
-/* Buttons - Windows XP 3D Beveled Style */
 button {
-    background-color: #D4D0C8;
-    border: 2px outset #FFFFFF;
-    font-family: "MS Sans Serif", Arial, sans-serif;
-    font-size: 11px;
-    padding: 4px 12px;
-    cursor: pointer;
-    margin: 5px 2px;
     width: 100%;
+    padding: 12px;
+    background-color: #4a7c94;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
 }
-
 button:hover {
-    background-color: #E0DCD4;
+    background-color: #5a9fd4;
 }
-
-button:active {
-    border: 2px inset #FFFFFF;
-}
-
 button:disabled {
-    background-color: #D4D0C8;
-    color: #808080;
+    background-color: #555;
     cursor: not-allowed;
 }
-
-/* Results Section */
 .results {
-    margin-top: 15px;
-    padding: 10px;
-    background-color: #FFFFF0;
-    border: 2px solid #000080;
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #353535;
+    border-radius: 5px;
+    border: 1px solid #444;
 }
-
 .range {
     text-align: center;
-    color: #000080;
-    font-size: 20px;
-    font-weight: bold;
-    padding: 10px;
-    background-color: #E0E0FF;
-    border: 2px inset #FFFFFF;
+    color: #6ac5f7;
     margin: 20px 0;
+    font-size: 24px;
+    font-weight: bold;
+    padding: 15px;
+    background-color: #2a3f4d;
+    border-radius: 8px;
+    border: 2px solid #4a7c94;
 }
-
-/* Helpful Ranges */
 .helpful-ranges {
-    margin-top: 15px;
-    padding: 10px;
-    background-color: #F0F0F0;
-    border: 1px solid #808080;
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #2a3f4d;
+    border-radius: 8px;
+    border: 1px solid #3a5f7d;
 }
-
 .helpful-ranges h3 {
     margin-top: 0;
-    color: #000080;
+    color: #6ac5f7;
     font-size: 16px;
 }
-
 .range-item {
-    padding: 5px;
-    margin: 3px 0;
-    background-color: #FFFFFF;
-    border: 1px solid #C0C0C0;
+    padding: 8px;
+    margin: 5px 0;
+    background-color: #1a2a35;
+    border-radius: 5px;
     font-size: 14px;
+    color: #a0c5e0;
 }
-
 .range-highlight {
-    color: #000080;
+    color: #7fd4ff;
     font-weight: bold;
 }
-
-/* Live Timer */
 #live-timer {
     font-weight: normal;
     font-size: 0.9em;
-    color: #666666;
+    color: #aaa;
+    margin-left: 10px;
     font-style: italic;
 }
-
-/* Observations - Table Style */
 .observations {
-    margin-top: 15px;
-    padding: 10px;
-    background-color: #F5F5F5;
-    border: 1px solid #808080;
+    margin-top: 20px;
     font-size: 14px;
+    color: #b0b0b0;
+    padding: 15px;
+    background-color: #2a3f4d;
+    border-radius: 8px;
+    border: 1px solid #3a5f7d;
 }
-
 .observations h3 {
     margin-top: 0;
-    color: #000080;
+    color: #6ac5f7;
     font-size: 16px;
 }
-
 .observation-item {
-    padding: 5px;
-    margin: 3px 0;
-    background-color: #FFFFFF;
-    border: 1px solid #C0C0C0;
+    padding: 10px;
+    margin: 5px 0;
+    background-color: #2a2a2a;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
-
 .observation-text {
-    display: inline;
+    flex: 1;
 }
-
-.observation-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.observation-table td {
-    padding: 5px;
-    border: 1px solid #808080;
-    background-color: #FFFFFF;
-    vertical-align: middle;
-}
-
-.observation-table td.obs-text {
-    width: 75%;
-}
-
-.observation-table td.obs-action {
-    width: 25%;
-    text-align: center;
-}
-
-/* Remove Button */
 .remove-btn {
-    background-color: #D4D0C8;
-    border: 2px outset #FFFFFF;
-    color: #CC0000;
-    padding: 2px 8px;
-    font-size: 11px;
+    background-color: #c44444;
+    padding: 5px 10px;
+    font-size: 12px;
     width: auto;
-    margin: 0;
+    margin-left: 10px;
 }
-
 .remove-btn:hover {
-    background-color: #E0DCD4;
+    background-color: #d66666;
 }
-
-.remove-btn:active {
-    border: 2px inset #FFFFFF;
-}
-
-/* Reset Button */
 .reset-btn {
-    background-color: #D4D0C8;
-    border: 2px outset #FFFFFF;
-    color: #CC0000;
+    background-color: #c44444;
     margin-top: 10px;
 }
-
 .reset-btn:hover {
-    background-color: #E0DCD4;
+    background-color: #d66666;
 }
-
-.reset-btn:active {
-    border: 2px inset #FFFFFF;
-}
-
-/* Info Box */
 .info {
-    background-color: #FFFFCC;
-    padding: 10px;
-    border: 1px solid #808080;
-    font-size: 12px;
-    color: #333333;
+    background-color: #2a3f4d;
+    padding: 15px;
+    border-radius: 5px;
     margin-bottom: 20px;
+    font-size: 14px;
+    color: #a0c5e0;
+    border: 1px solid #3a5f7d;
 }
-
-/* Utility Classes */
 .no-help {
-    color: #666666;
+    color: #888;
     font-style: italic;
     text-align: center;
     padding: 10px;
 }
-
 .unhelpful-warning {
-    background-color: #FFEECC;
-    border: 1px solid #CC9900;
-    padding: 8px;
-    color: #996600;
-    font-size: 12px;
+    background-color: #3a2a1a;
+    border: 1px solid #5a3a2a;
+    padding: 10px;
     margin-bottom: 10px;
+    border-radius: 5px;
+    color: #daa520;
+    font-size: 13px;
 }
-
 .debug-info {
     margin-top: 10px;
-    padding: 8px;
-    background-color: #F0F0F0;
-    border: 1px solid #C0C0C0;
-    font-size: 11px;
-    color: #666666;
-    font-family: "Courier New", monospace;
-}
+    padding: 10px;
+    background-color: #1a1a1a;
+    border-radius: 5px;
+    font-size: 12px;
+    color: #888;
+    font-family: monospace;
+} 
