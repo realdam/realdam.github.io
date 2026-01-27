@@ -1,7 +1,9 @@
 let observations = [];
 let startTime = null;
 let isProcessing = false;
-   
+const ROUNDING_UNCERTAINTY = 0.5; // Integer display adds +-0.5 min uncertainty
+const TICK_DURATION = 0.01; // 0.6 seconds = 0.01 minutes (negligible, documented only)
+
 // Fetch remote timer data
 async function fetchRemoteData() {
     try {
@@ -73,7 +75,8 @@ function addObservation() {
         observedTime: value,
         elapsedMinutes: elapsedMinutes,
         timestamp: currentTime,
-        accuracy: accuracy,
+        baseAccuracy: accuracy,
+        accuracy: accuracy + ROUNDING_UNCERTAINTY,
         telescopeType: telescopeType.options[telescopeType.selectedIndex].text.split(' ')[0]
     });
     
@@ -106,7 +109,13 @@ function calculateHelpfulRanges(minPossible, maxPossible) {
             description: "Prediction is already very precise"
         }];
     }
-    
+
+    // Removed: The "telescope too imprecise" early-return was incorrect.
+    // Even when accuracy > range/2, individual readings at the extremes can still
+    // narrow the estimate. The logic below correctly calculates which specific
+    // readings would be helpful vs unhelpful.
+    const effectiveAccuracy = currentAccuracy + ROUNDING_UNCERTAINTY;
+
     // For a telescope reading R with accuracy A:
     // The actual time must be in [R-A, R+A]
     // This narrows our current range [minPossible, maxPossible] if:
@@ -176,7 +185,7 @@ function calculateHelpfulRanges(minPossible, maxPossible) {
         return [{
             min: -1,
             max: -1,
-            description: "No readings will improve the estimate with this telescope"
+            description: "Any reading from this telescope would fall within the current range. Try taking multiple observations - they may still help narrow the estimate over time."
         }];
     }
     
@@ -250,7 +259,7 @@ function updatePrediction() {
             const uMax = helpfulRanges.unhelpfulRange.max;
             if (uMin <= uMax) {
                 helpfulRangesHtml = `<div class="unhelpful-warning">
-                            Readings between ${uMin.toFixed(1)} - ${uMax.toFixed(1)} min won't narrow the estimate
+                            Readings between ${Math.round(uMin)} - ${Math.round(uMax)} min won't narrow the estimate
                         </div>`;
             }
         }
@@ -264,11 +273,13 @@ function updatePrediction() {
         ).join('');
         
         // Add debug info (can be removed in production)
+        const baseAccuracy = parseInt(document.getElementById('telescopeType').value);
+        const effectiveAccuracyDisplay = baseAccuracy + ROUNDING_UNCERTAINTY;
         const debugInfo = `
                     <div class="debug-info">
                         Current estimate: ${minPossible.toFixed(1)} - ${maxPossible.toFixed(1)} min<br>
-                        Telescope accuracy: ±${parseInt(document.getElementById('telescopeType').value)} min<br>
-                        Possible readings: ${Math.max(0, minPossible - parseInt(document.getElementById('telescopeType').value)).toFixed(1)} - ${(maxPossible + parseInt(document.getElementById('telescopeType').value)).toFixed(1)} min
+                        Telescope accuracy: ±${baseAccuracy} min (±${effectiveAccuracyDisplay.toFixed(1)} min effective with rounding)<br>
+                        Possible readings: ${Math.max(0, minPossible - effectiveAccuracyDisplay).toFixed(1)} - ${(maxPossible + effectiveAccuracyDisplay).toFixed(1)} min
                     </div>
                 `;
         helpfulRangesHtml += debugInfo;
@@ -282,8 +293,8 @@ function updatePrediction() {
         const timeLabel = obs.elapsedMinutes < 0.05 ? 'T=0' : `T+${obs.elapsedMinutes.toFixed(1)} min`;
         return `<div class="observation-item">
                     <div class="observation-text">
-                        Observation ${index + 1}: ${obs.observedTime} min 
-                        (${obs.telescopeType}, ${timeLabel})
+                        Observation ${index + 1}: ${obs.observedTime} min
+                        (${obs.telescopeType} ±${obs.accuracy.toFixed(1)}, ${timeLabel})
                     </div>
                     <button class="remove-btn" onclick="removeObservation(${index})">Remove</button>
                 </div>`;
