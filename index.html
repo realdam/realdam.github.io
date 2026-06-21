@@ -20,7 +20,13 @@
                 <span id="lastUpdate"></span>
             </div>
         </div>
-        
+
+        <!-- Community submissions list (shown only when REMOTE_API is configured) -->
+        <div class="community-submissions" id="communitySubmissions" style="display: none;">
+            <h2>Community Predictions</h2>
+            <div id="submissionsList"><div class="no-help">No submissions yet.</div></div>
+        </div>
+
         <div class="local-timer">
             <h2>Local Timer</h2>
             <div class="info">
@@ -52,6 +58,18 @@
                     <h3>Helpful Future Observations:</h3>
                     <div id="helpfulRangesList"></div>
                 </div>
+            </div>
+
+            <!-- Submit your prediction to the community timer (shown only when REMOTE_API is configured) -->
+            <div class="submit-community" id="submitCommunity" style="display: none;">
+                <h3>Submit Your Prediction</h3>
+                <div class="submit-hint" id="submitHint">Add a telescope observation above to generate a prediction you can submit.</div>
+                <div class="input-group">
+                    <label for="username">Your name (as you want it shown):</label>
+                    <input type="text" id="username" maxlength="20" placeholder="e.g. Zezima">
+                </div>
+                <button id="submitBtn" onclick="submitPrediction()" disabled>Submit to Community Timer</button>
+                <div class="submit-status" id="submitStatus"></div>
             </div>
 
             <div class="observations">

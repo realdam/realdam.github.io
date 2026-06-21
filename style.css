@@ -215,4 +215,76 @@ button:disabled {
     font-size: 12px;
     color: #888;
     font-family: monospace;
+}
+.remote-consensus {
+    font-size: 13px;
+    color: #9fb8c7;
+    margin-top: 4px;
+}
+.submit-community {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #2a3f4d;
+    border-radius: 8px;
+    border: 1px solid #3a5f7d;
+}
+.submit-community h3 {
+    margin-top: 0;
+    color: #6ac5f7;
+    font-size: 16px;
+}
+.submit-hint {
+    font-size: 13px;
+    color: #a0c5e0;
+    margin-bottom: 10px;
+}
+.submit-status {
+    margin-top: 10px;
+    font-size: 14px;
+    min-height: 18px;
+}
+.submit-status.success {
+    color: #6ac56a;
+}
+.submit-status.error {
+    color: #d66666;
+}
+.community-submissions {
+    margin-bottom: 20px;
+    padding: 20px;
+    background-color: #2a3f4d;
+    border-radius: 8px;
+    border: 1px solid #3a5f7d;
+}
+.community-submissions h2 {
+    margin-top: 0;
+    color: #6ac5f7;
+    font-size: 18px;
+}
+.submission-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    margin: 5px 0;
+    background-color: #1a2a35;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #a0c5e0;
+}
+.submission-name {
+    font-weight: bold;
+    color: #7fd4ff;
+}
+.submission-window {
+    color: #cfe6f5;
+}
+.submission-time {
+    color: #888;
+    font-size: 12px;
+}
+.submission-item.expired {
+    opacity: 0.5;
 } 

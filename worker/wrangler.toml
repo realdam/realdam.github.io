@@ -1,0 +1,14 @@
+name = "star-timer"
+main = "src/worker.js"
+compatibility_date = "2025-01-01"
+
+# The D1 database binding. After running `wrangler d1 create star-timer`,
+# paste the printed database_id below (replace the placeholder).
+[[d1_databases]]
+binding = "DB"
+database_name = "star-timer"
+database_id = "042f75b5-8a52-4bf9-a335-9d35b56b2c9b"
+
+# Daily cleanup of stale rows (decoupled from request traffic). 03:00 UTC.
+[triggers]
+crons = ["0 3 * * *"]

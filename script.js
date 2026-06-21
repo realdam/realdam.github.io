@@ -1,76 +1,251 @@
+// ============================================================================
+// Configuration
+// ----------------------------------------------------------------------------
+// After deploying the Cloudflare Worker (see worker/README.md), paste its URL
+// here WITHOUT a trailing slash, e.g. 'https://star-timer.yourname.workers.dev'.
+// While left empty, the page falls back to the legacy static global-data.json
+// and the community submit form stays hidden — so the site keeps working
+// exactly as before until you flip this on.
+const REMOTE_API = 'https://star-timer.realdam.workers.dev';
+// ============================================================================
+
 let observations = [];
 let startTime = null;
 let isProcessing = false;
+let latestPrediction = null; // { min, max } in minutes-from-now, or null when no observations
 const ROUNDING_UNCERTAINTY = 0.5; // Integer display adds +-0.5 min uncertainty
 const TICK_DURATION = 0.01; // 0.6 seconds = 0.01 minutes (negligible, documented only)
 
-// Fetch remote timer data
+// --- Small helpers -----------------------------------------------------------
+
+// Escape user-controlled text before inserting into innerHTML. CRITICAL: usernames
+// are attacker-controlled and echoed into the page, so this prevents stored XSS.
+function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+    }[c]));
+}
+
+function relativeTime(timestamp) {
+    const diffMin = (Date.now() - timestamp) / 60000;
+    if (diffMin < 1) return 'just now';
+    if (diffMin < 60) return `${Math.floor(diffMin)}m ago`;
+    return `${Math.floor(diffMin / 60)}h ago`;
+}
+
+// --- Remote / community timer ------------------------------------------------
+
 async function fetchRemoteData() {
     try {
-        // Add cache-busting parameter to prevent stale data
-        const response = await fetch(`global-data.json?t=${new Date().getTime()}`);
+        const url = REMOTE_API ? `${REMOTE_API}/data` : `global-data.json?t=${Date.now()}`;
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error('Failed to fetch remote timer data');
         }
         const data = await response.json();
         updateRemoteDisplay(data);
+        renderSubmissions(data);
     } catch (error) {
         console.error('Error fetching remote timer data:', error);
-        document.getElementById('remoteContent').innerHTML = 
+        document.getElementById('remoteContent').innerHTML =
             '<div class="remote-offline">No remote data available</div>';
+        renderSubmissions(null);
     }
 }
 
 function updateRemoteDisplay(data) {
-    if (!data || !data.timestamp) {
-        document.getElementById('remoteContent').innerHTML = 
-            '<div class="remote-offline">No remote data available</div>';
+    const content = document.getElementById('remoteContent');
+    const lastUpdateEl = document.getElementById('lastUpdate');
+
+    if (!data) {
+        content.innerHTML = '<div class="remote-offline">No remote data available</div>';
+        lastUpdateEl.textContent = '';
         return;
     }
-    
+
     const now = Date.now();
-    const elapsed = (now - data.timestamp) / 1000 / 60; // minutes
-    const minRemaining = Math.max(0, data.minTime - elapsed);
-    const maxRemaining = Math.max(0, data.maxTime - elapsed);
-    
-    if (maxRemaining <= 0) {
-        document.getElementById('remoteContent').innerHTML = 
-            '<div class="remote-offline">No remote prediction available</div>';
-    } else {
-        document.getElementById('remoteContent').innerHTML = 
-            `<div class="remote-range">${minRemaining.toFixed(1)} - ${maxRemaining.toFixed(1)} minutes</div>`;
+    let absMin = null;
+    let absMax = null;
+    let sampleCount = null;
+    let computedAt = null;
+
+    if (data.absMin != null && data.absMax != null) {
+        // New community shape (absolute epoch-ms window + median consensus).
+        absMin = data.absMin;
+        absMax = data.absMax;
+        sampleCount = data.sampleCount;
+        computedAt = data.computedAt;
+    } else if (data.timestamp != null && data.minTime != null && data.maxTime != null) {
+        // Legacy static shape: relative minutes anchored at a timestamp.
+        absMin = data.timestamp + data.minTime * 60000;
+        absMax = data.timestamp + data.maxTime * 60000;
+        computedAt = data.timestamp;
     }
-    
-    const lastUpdateTime = new Date(data.timestamp);
-    document.getElementById('lastUpdate').textContent = 
-        `Last updated: ${lastUpdateTime.toLocaleString()}`;
+
+    if (absMin == null || (sampleCount != null && sampleCount === 0)) {
+        content.innerHTML = REMOTE_API
+            ? '<div class="remote-offline">No community predictions yet — be the first below!</div>'
+            : '<div class="remote-offline">No remote data available</div>';
+        lastUpdateEl.textContent = '';
+        return;
+    }
+
+    const minRemaining = Math.max(0, (absMin - now) / 60000);
+    const maxRemaining = Math.max(0, (absMax - now) / 60000);
+
+    if (maxRemaining <= 0) {
+        content.innerHTML = '<div class="remote-offline">No remote prediction available</div>';
+    } else {
+        const consensus = sampleCount != null
+            ? `<div class="remote-consensus">consensus of ${sampleCount} prediction${sampleCount === 1 ? '' : 's'}</div>`
+            : '';
+        content.innerHTML =
+            `<div class="remote-range">${minRemaining.toFixed(1)} - ${maxRemaining.toFixed(1)} minutes</div>${consensus}`;
+    }
+
+    lastUpdateEl.textContent = computedAt
+        ? `Last updated: ${new Date(computedAt).toLocaleString()}`
+        : '';
 }
+
+function renderSubmissions(data) {
+    const section = document.getElementById('communitySubmissions');
+    const list = document.getElementById('submissionsList');
+    if (!section || !list) return;
+
+    if (!REMOTE_API) {
+        section.style.display = 'none';
+        return;
+    }
+    section.style.display = 'block';
+
+    const subs = (data && data.submissions) || [];
+    if (!subs.length) {
+        list.innerHTML = '<div class="no-help">No community predictions yet — be the first!</div>';
+        return;
+    }
+
+    list.innerHTML = subs.map((s) => {
+        const telescope = s.telescopeType ? ` · ${escapeHtml(s.telescopeType)}` : '';
+        const expiredTag = s.expired ? ' · expired' : '';
+        return `<div class="submission-item${s.expired ? ' expired' : ''}">
+                    <span class="submission-name">${escapeHtml(s.username)}</span>
+                    <span class="submission-window">${Number(s.minTime).toFixed(1)} – ${Number(s.maxTime).toFixed(1)} min${telescope}</span>
+                    <span class="submission-time">${relativeTime(s.submittedAt)}${expiredTag}</span>
+                </div>`;
+    }).join('');
+}
+
+async function submitPrediction() {
+    if (!REMOTE_API) return;
+
+    const nameInput = document.getElementById('username');
+    const statusEl = document.getElementById('submitStatus');
+    const username = nameInput.value.trim();
+
+    if (!username) {
+        statusEl.textContent = 'Enter a name first.';
+        statusEl.className = 'submit-status error';
+        return;
+    }
+    if (!latestPrediction) {
+        statusEl.textContent = 'Add a telescope observation first.';
+        statusEl.className = 'submit-status error';
+        return;
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    statusEl.textContent = 'Submitting…';
+    statusEl.className = 'submit-status';
+
+    const telescopeSel = document.getElementById('telescopeType');
+    const telescopeType = telescopeSel.options[telescopeSel.selectedIndex].text.split(' ')[0];
+
+    try {
+        const response = await fetch(`${REMOTE_API}/submit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username,
+                minTime: Number(latestPrediction.min.toFixed(1)),
+                maxTime: Number(latestPrediction.max.toFixed(1)),
+                telescopeType,
+            }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok && data.ok) {
+            statusEl.textContent = `Submitted — thanks, ${username}!`;
+            statusEl.className = 'submit-status success';
+            fetchRemoteData();
+        } else {
+            statusEl.textContent = data.error || 'Submission failed. Please try again.';
+            statusEl.className = 'submit-status error';
+        }
+    } catch (error) {
+        console.error('Submission error:', error);
+        statusEl.textContent = 'Network error — could not reach the server.';
+        statusEl.className = 'submit-status error';
+    } finally {
+        updateSubmitUI();
+    }
+}
+
+function updateSubmitUI() {
+    const btn = document.getElementById('submitBtn');
+    const hint = document.getElementById('submitHint');
+    if (!btn || !hint) return;
+
+    if (latestPrediction) {
+        btn.disabled = false;
+        hint.textContent =
+            `You'll submit your current prediction: ${latestPrediction.min.toFixed(1)} – ${latestPrediction.max.toFixed(1)} minutes.`;
+    } else {
+        btn.disabled = true;
+        hint.textContent = 'Add a telescope observation above to generate a prediction you can submit.';
+    }
+}
+
+function initCommunity() {
+    const submitBlock = document.getElementById('submitCommunity');
+    const communityBlock = document.getElementById('communitySubmissions');
+    const display = REMOTE_API ? 'block' : 'none';
+    if (submitBlock) submitBlock.style.display = display;
+    if (communityBlock) communityBlock.style.display = display;
+    updateSubmitUI();
+}
+
+// --- Local telescope timer (unchanged math) ----------------------------------
 
 function addObservation() {
     if (isProcessing) return;
-    
+
     const input = document.getElementById('telescopeTime');
     const telescopeType = document.getElementById('telescopeType');
     const value = parseInt(input.value);
     const accuracy = parseInt(telescopeType.value);
-    
+
     if (isNaN(value)) {
         alert('Please enter a valid time');
         return;
     }
-    
+
     isProcessing = true;
     document.getElementById('addBtn').disabled = true;
-    
+
     const currentTime = Date.now();
-    
+
     if (observations.length === 0) {
         startTime = currentTime;
     }
-    
+
     const elapsedSeconds = (currentTime - startTime) / 1000;
     const elapsedMinutes = elapsedSeconds / 60;
-    
+
     observations.push({
         observedTime: value,
         elapsedMinutes: elapsedMinutes,
@@ -79,11 +254,11 @@ function addObservation() {
         accuracy: accuracy + ROUNDING_UNCERTAINTY,
         telescopeType: telescopeType.options[telescopeType.selectedIndex].text.split(' ')[0]
     });
-    
+
     updatePrediction();
     input.value = '';
     input.focus();
-    
+
     setTimeout(() => {
         isProcessing = false;
         document.getElementById('addBtn').disabled = false;
@@ -98,10 +273,10 @@ function removeObservation(index) {
 function calculateHelpfulRanges(minPossible, maxPossible) {
     const currentAccuracy = parseInt(document.getElementById('telescopeType').value);
     const ranges = [];
-    
+
     // Current range width
     const currentRange = maxPossible - minPossible;
-    
+
     if (currentRange <= 0.1) {
         return [{
             min: -1,
@@ -120,32 +295,32 @@ function calculateHelpfulRanges(minPossible, maxPossible) {
     // The actual time must be in [R-A, R+A]
     // This narrows our current range [minPossible, maxPossible] if:
     // Either R+A < maxPossible OR R-A > minPossible
-    
+
     // What telescope readings are actually possible given our current estimate?
     // If actual time is minPossible, telescope shows: minPossible + [-A, +A]
     // If actual time is maxPossible, telescope shows: maxPossible + [-A, +A]
     // So possible telescope readings: [minPossible-A, maxPossible+A]
-    
+
     const minPossibleReading = Math.max(0, minPossible - currentAccuracy);
     const maxPossibleReading = maxPossible + currentAccuracy;
-    
+
     // For a reading R to narrow our estimate:
     // Case 1: R+A < maxPossible (narrows the upper bound)
     //         R < maxPossible - A
-    // Case 2: R-A > minPossible (narrows the lower bound)  
+    // Case 2: R-A > minPossible (narrows the lower bound)
     //         R > minPossible + A
-    
+
     // Readings that don't help are those where:
     // R+A >= maxPossible AND R-A <= minPossible
     // Which means: maxPossible - A <= R <= minPossible + A
-    
+
     const unhelpfulMin = maxPossible - currentAccuracy;
     const unhelpfulMax = minPossible + currentAccuracy;
-    
+
     // Check if there's actually an unhelpful range
     if (unhelpfulMin <= unhelpfulMax) {
         // There's an unhelpful middle range
-        
+
         // Low helpful readings (those that narrow the upper bound)
         if (minPossibleReading < unhelpfulMin) {
             ranges.push({
@@ -154,7 +329,7 @@ function calculateHelpfulRanges(minPossible, maxPossible) {
                 description: "Low readings (narrow the maximum)"
             });
         }
-        
+
         // High helpful readings (those that narrow the lower bound)
         if (unhelpfulMax < maxPossibleReading) {
             ranges.push({
@@ -163,7 +338,7 @@ function calculateHelpfulRanges(minPossible, maxPossible) {
                 description: "High readings (narrow the minimum)"
             });
         }
-        
+
         // Store unhelpful range for display
         if (ranges.length > 0) {
             ranges.unhelpfulRange = {
@@ -179,7 +354,7 @@ function calculateHelpfulRanges(minPossible, maxPossible) {
             description: "Any reading in this range will improve the estimate"
         });
     }
-    
+
     // If no helpful ranges exist within possible readings
     if (ranges.length === 0) {
         return [{
@@ -188,7 +363,7 @@ function calculateHelpfulRanges(minPossible, maxPossible) {
             description: "Any reading from this telescope would fall within the current range. Try taking multiple observations - they may still help narrow the estimate over time."
         }];
     }
-    
+
     return ranges;
 }
 
@@ -206,22 +381,24 @@ function updatePrediction() {
     if (observations.length === 0) {
         document.getElementById('results').style.display = 'none';
         document.getElementById('observationsList').innerHTML = '<div class="no-help">No observations made yet.</div>';
+        latestPrediction = null;
+        updateSubmitUI();
         return;
     }
-    
+
     const currentTime = Date.now();
     const totalElapsed = (currentTime - startTime) / 1000 / 60;
-    
+
     // Adjust all observations to current time
     const adjustedObservations = observations.map(obs => {
         const timeSinceObs = totalElapsed - obs.elapsedMinutes;
         return obs.observedTime - timeSinceObs;
     });
-    
+
     // Calculate the possible range considering each observation's accuracy
     let minPossible = -Infinity;
     let maxPossible = Infinity;
-    
+
     observations.forEach((obs, index) => {
         const adjusted = adjustedObservations[index];
         const obsMin = adjusted - obs.accuracy;
@@ -229,26 +406,30 @@ function updatePrediction() {
         minPossible = Math.max(minPossible, obsMin);
         maxPossible = Math.min(maxPossible, obsMax);
     });
-    
+
     // Ensure we don't have negative ranges
     minPossible = Math.max(0, minPossible);
     maxPossible = Math.max(0, maxPossible);
-    
+
     // If ranges don't overlap properly, show the midpoint
     if (minPossible > maxPossible) {
         const mid = (minPossible + maxPossible) / 2;
         minPossible = mid;
         maxPossible = mid;
     }
-    
+
     // Display results
     document.getElementById('results').style.display = 'block';
     document.getElementById('range').textContent = `${minPossible.toFixed(1)} - ${maxPossible.toFixed(1)} minutes`;
-    
+
+    // Make the current prediction available to the community submit form.
+    latestPrediction = { min: minPossible, max: maxPossible };
+    updateSubmitUI();
+
     // Calculate and display helpful ranges
     const helpfulRanges = calculateHelpfulRanges(minPossible, maxPossible);
     let helpfulRangesHtml = '';
-    
+
     if (helpfulRanges.length > 0 && helpfulRanges[0].min === -1) {
         // No helpful ranges
         helpfulRangesHtml = '<div class="no-help">' + helpfulRanges[0].description + '</div>';
@@ -263,15 +444,15 @@ function updatePrediction() {
                         </div>`;
             }
         }
-        
+
         // Show helpful ranges
-        helpfulRangesHtml += helpfulRanges.filter(r => r.min !== -1).map(range => 
+        helpfulRangesHtml += helpfulRanges.filter(r => r.min !== -1).map(range =>
             `<div class="range-item">
                         <span class="range-highlight">${range.min.toFixed(1)} - ${range.max.toFixed(1)} min</span>
                         <span style="color: #888; margin-left: 10px;">${range.description}</span>
                     </div>`
         ).join('');
-        
+
         // Add debug info (can be removed in production)
         const baseAccuracy = parseInt(document.getElementById('telescopeType').value);
         const effectiveAccuracyDisplay = baseAccuracy + ROUNDING_UNCERTAINTY;
@@ -284,9 +465,9 @@ function updatePrediction() {
                 `;
         helpfulRangesHtml += debugInfo;
     }
-    
+
     document.getElementById('helpfulRangesList').innerHTML = helpfulRangesHtml;
-    
+
     // Update observations list
     const listHtml = observations.map((obs, index) => {
         const adjusted = adjustedObservations[index];
@@ -299,7 +480,7 @@ function updatePrediction() {
                     <button class="remove-btn" onclick="removeObservation(${index})">Remove</button>
                 </div>`;
     }).join('');
-    
+
     document.getElementById('observationsList').innerHTML = listHtml;
 }
 
@@ -319,15 +500,27 @@ document.getElementById('telescopeTime').addEventListener('keypress', function(e
     }
 });
 
+// Allow Enter key in the username field to submit to the community timer
+const usernameInput = document.getElementById('username');
+if (usernameInput) {
+    usernameInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            submitPrediction();
+        }
+    });
+}
+
 // Update the timer every second
 setInterval(updatePrediction, 1000);
 
 // Fetch remote data every 30 seconds
 setInterval(fetchRemoteData, 30000);
 
-// Initial fetch
+// Initial setup
+initCommunity();
 fetchRemoteData();
 updatePrediction();
 
 // Focus on input when page loads
-document.getElementById('telescopeTime').focus(); 
+document.getElementById('telescopeTime').focus();
