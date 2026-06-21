@@ -234,8 +234,8 @@ function addObservation() {
     const value = Number(input.value);
     const accuracy = parseInt(telescopeType.value, 10);
 
-    if (!rawValue || !Number.isInteger(value) || value < 0) {
-        alert('Please enter a whole non-negative number of minutes');
+    if (!rawValue || !Number.isInteger(value)) {
+        alert('Please enter a whole number of minutes');
         return;
     }
 
@@ -305,7 +305,7 @@ function calculateHelpfulRanges(minPossible, maxPossible) {
     // If actual time is maxPossible, telescope shows: maxPossible + [-A, +A]
     // So possible telescope readings: [minPossible-A, maxPossible+A]
 
-    const minPossibleReading = Math.max(0, minPossible - effectiveAccuracy);
+    const minPossibleReading = minPossible - effectiveAccuracy;
     const maxPossibleReading = maxPossible + effectiveAccuracy;
 
     // For a reading R to narrow our estimate:
@@ -464,7 +464,7 @@ function updatePrediction() {
                     <div class="debug-info">
                         Current estimate: ${minPossible.toFixed(1)} - ${maxPossible.toFixed(1)} min<br>
                         Telescope accuracy: ±${baseAccuracy} min (±${effectiveAccuracyDisplay.toFixed(1)} min effective with rounding)<br>
-                        Possible readings: ${Math.max(0, minPossible - effectiveAccuracyDisplay).toFixed(1)} - ${(maxPossible + effectiveAccuracyDisplay).toFixed(1)} min
+                        Possible readings: ${(minPossible - effectiveAccuracyDisplay).toFixed(1)} - ${(maxPossible + effectiveAccuracyDisplay).toFixed(1)} min
                     </div>
                 `;
         helpfulRangesHtml += debugInfo;

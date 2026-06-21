@@ -110,6 +110,28 @@ test('empty telescope readings are rejected instead of treated as zero', () => {
 
     sandbox.addObservation();
 
-    assert.deepEqual(sandbox.__alerts, ['Please enter a whole non-negative number of minutes']);
+    assert.deepEqual(sandbox.__alerts, ['Please enter a whole number of minutes']);
     assert.equal(sandbox.document.getElementById('results').hidden, true);
+});
+
+test('negative telescope readings are accepted', () => {
+    const sandbox = loadScript(9);
+    sandbox.document.getElementById('telescopeTime').value = '-5';
+
+    sandbox.addObservation();
+
+    assert.deepEqual(sandbox.__alerts, []);
+    assert.equal(sandbox.document.getElementById('results').hidden, false);
+});
+
+test('helpful ranges extend into negative readings when prediction is near zero', () => {
+    const sandbox = loadScript(9);
+    // Simulate a prediction window whose lower bound was clamped to 0 by updatePrediction.
+    // The telescope can still display negative integers, so the low helpful-reading
+    // range must extend below zero, not be clamped to 0.
+    const ranges = sandbox.calculateHelpfulRanges(0, 4.5);
+
+    const lowRange = ranges.find(r => r.description.includes('Low'));
+    assert.ok(lowRange, 'expected a low helpful range to exist');
+    assert.ok(lowRange.min < 0, `expected low range to start below 0, got min=${lowRange.min}`);
 });
