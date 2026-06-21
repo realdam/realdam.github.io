@@ -38,13 +38,15 @@ function corsHeaders(origin) {
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400',
     'Vary': 'Origin',
+    'X-Content-Type-Options': 'nosniff',
+    'Cache-Control': 'no-store',
   };
 }
 
-function json(body, status, origin) {
+function json(body, status, origin, extraHeaders) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
+    headers: { 'Content-Type': 'application/json', ...corsHeaders(origin), ...(extraHeaders || {}) },
   });
 }
 
@@ -81,7 +83,8 @@ async function readJsonBody(request, maxBytes) {
     }
 
     text += decoder.decode();
-  } catch {
+  } catch (e) {
+    console.error('readJsonBody: stream/parse failure:', e?.message);
     return { error: 'Invalid request body.', status: 400 };
   }
 
@@ -92,16 +95,29 @@ async function readJsonBody(request, maxBytes) {
   }
 }
 
-// Per-client key for dedupe + cooldown. Keyed on the TRUE connecting IP only
-// (Cloudflare sets CF-Connecting-IP and the client cannot spoof it). User-Agent is
-// deliberately excluded: including it would let one host mint unlimited identities
-// by varying UA, defeating the one-vote-per-client and rate-limit guards. Trade-off:
-// users behind the same IP (shared NAT/household) collapse to one active vote, which
-// is acceptable and strengthens consensus integrity against ballot-stuffing.
-async function clientHint(request) {
+// Per-client key for dedupe + cooldown. Keyed on HMAC-SHA-256(env.CLIENT_HINT_KEY, ip)
+// where ip is the true connecting IP (Cloudflare sets CF-Connecting-IP and the client
+// cannot spoof it). The HMAC secret (set via `wrangler secret put CLIENT_HINT_KEY`)
+// prevents an attacker with DB read access from rainbow-table-ing the hashes back to
+// raw IPs — a plain SHA-256(ip) would be reversible against edge-log correlation.
+// User-Agent is deliberately excluded: including it would let one host mint unlimited
+// identities by varying UA, defeating the one-vote-per-client and rate-limit guards.
+// Trade-off: users behind the same IP (shared NAT/household) collapse to one active
+// vote, which is acceptable and strengthens consensus integrity against ballot-stuffing.
+async function clientHint(request, env) {
+  if (!env.CLIENT_HINT_KEY) {
+    throw new Error('CLIENT_HINT_KEY not configured (run: wrangler secret put CLIENT_HINT_KEY)');
+  }
   const ip = request.headers.get('CF-Connecting-IP') || '';
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ip));
-  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(env.CLIENT_HINT_KEY),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(ip));
+  return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 // Strip ASCII control chars (codepoints < 32 and DEL 127), collapse whitespace, cap length.
@@ -158,15 +174,22 @@ async function handleSubmit(request, env, origin) {
   const roundedMax = Math.round(maxTime * 10) / 10;
 
   const now = Date.now();
-  const hint = await clientHint(request);
+  const hint = await clientHint(request, env);
 
   // Cooldown: reject rapid resubmits from the same client.
   const last = await env.DB
     .prepare('SELECT submitted_at FROM predictions WHERE client_hint = ? ORDER BY submitted_at DESC LIMIT 1')
     .bind(hint)
     .first();
-  if (last && now - last.submitted_at < COOLDOWN_MS)
-    return json({ ok: false, error: 'Please wait a few seconds before resubmitting.' }, 429, origin);
+  if (last && now - last.submitted_at < COOLDOWN_MS) {
+    const retryAfter = Math.ceil((COOLDOWN_MS - (now - last.submitted_at)) / 1000);
+    return json(
+      { ok: false, error: 'Please wait a few seconds before resubmitting.' },
+      429,
+      origin,
+      { 'Retry-After': String(retryAfter) }
+    );
+  }
 
   const absMin = now + roundedMin * 60000;
   const absMax = now + roundedMax * 60000;

@@ -50,7 +50,23 @@ This prints a `database_id`. Copy it into **`wrangler.toml`**, replacing
 wrangler d1 execute star-timer --remote --file=./schema.sql
 ```
 
-### 5. Deploy the Worker
+### 5. Set the `CLIENT_HINT_KEY` secret
+
+The Worker stores per-client vote-dedupe keys as `HMAC-SHA-256(CLIENT_HINT_KEY, ip)`
+rather than plain `SHA-256(ip)` — so that an attacker who ever reads the `predictions`
+table cannot rainbow-table those hashes back to raw IPs. Generate any sufficiently
+random string and set it as a Worker secret (the value never goes in `wrangler.toml`
+or any committed file):
+
+```bash
+openssl rand -hex 32 | wrangler secret put CLIENT_HINT_KEY
+```
+
+Without this secret the Worker throws on every submit. Rotate it any time; old rows
+will simply expire out via the normal 6h TTL (a one-time duplicate-vote window opens
+for ~6h after rotation, which is the intended trade-off).
+
+### 6. Deploy the Worker
 
 ```bash
 wrangler deploy
@@ -59,7 +75,7 @@ wrangler deploy
 Wrangler prints your Worker URL, e.g.
 `https://star-timer.<your-subdomain>.workers.dev`.
 
-### 6. Point the frontend at it
+### 7. Point the frontend at it
 
 In **`../script.js`**, set the config constant near the top:
 
