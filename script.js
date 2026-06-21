@@ -15,6 +15,7 @@ let isProcessing = false;
 let latestPrediction = null; // { min, max } in minutes-from-now, or null when no observations
 const ROUNDING_UNCERTAINTY = 0.5; // Integer display adds +-0.5 min uncertainty
 const TICK_DURATION = 0.01; // 0.6 seconds = 0.01 minutes (negligible, documented only)
+const DISPLAY_STEP = 0.1;
 
 // --- Small helpers -----------------------------------------------------------
 
@@ -118,10 +119,10 @@ function renderSubmissions(data) {
     if (!section || !list) return;
 
     if (!REMOTE_API) {
-        section.style.display = 'none';
+        section.hidden = true;
         return;
     }
-    section.style.display = 'block';
+    section.hidden = false;
 
     const subs = (data && data.submissions) || [];
     if (!subs.length) {
@@ -213,24 +214,28 @@ function updateSubmitUI() {
 function initCommunity() {
     const submitBlock = document.getElementById('submitCommunity');
     const communityBlock = document.getElementById('communitySubmissions');
-    const display = REMOTE_API ? 'block' : 'none';
-    if (submitBlock) submitBlock.style.display = display;
-    if (communityBlock) communityBlock.style.display = display;
+    if (submitBlock) submitBlock.hidden = !REMOTE_API;
+    if (communityBlock) communityBlock.hidden = !REMOTE_API;
     updateSubmitUI();
 }
 
-// --- Local telescope timer (unchanged math) ----------------------------------
+// --- Local telescope timer ----------------------------------------------------
+
+function effectiveTelescopeAccuracy(baseAccuracy) {
+    return baseAccuracy + ROUNDING_UNCERTAINTY;
+}
 
 function addObservation() {
     if (isProcessing) return;
 
     const input = document.getElementById('telescopeTime');
     const telescopeType = document.getElementById('telescopeType');
-    const value = parseInt(input.value);
-    const accuracy = parseInt(telescopeType.value);
+    const rawValue = input.value.trim();
+    const value = Number(input.value);
+    const accuracy = parseInt(telescopeType.value, 10);
 
-    if (isNaN(value)) {
-        alert('Please enter a valid time');
+    if (!rawValue || !Number.isInteger(value) || value < 0) {
+        alert('Please enter a whole non-negative number of minutes');
         return;
     }
 
@@ -251,7 +256,7 @@ function addObservation() {
         elapsedMinutes: elapsedMinutes,
         timestamp: currentTime,
         baseAccuracy: accuracy,
-        accuracy: accuracy + ROUNDING_UNCERTAINTY,
+        accuracy: effectiveTelescopeAccuracy(accuracy),
         telescopeType: telescopeType.options[telescopeType.selectedIndex].text.split(' ')[0]
     });
 
@@ -271,7 +276,8 @@ function removeObservation(index) {
 }
 
 function calculateHelpfulRanges(minPossible, maxPossible) {
-    const currentAccuracy = parseInt(document.getElementById('telescopeType').value);
+    const currentAccuracy = parseInt(document.getElementById('telescopeType').value, 10);
+    const effectiveAccuracy = effectiveTelescopeAccuracy(currentAccuracy);
     const ranges = [];
 
     // Current range width
@@ -289,8 +295,6 @@ function calculateHelpfulRanges(minPossible, maxPossible) {
     // Even when accuracy > range/2, individual readings at the extremes can still
     // narrow the estimate. The logic below correctly calculates which specific
     // readings would be helpful vs unhelpful.
-    const effectiveAccuracy = currentAccuracy + ROUNDING_UNCERTAINTY;
-
     // For a telescope reading R with accuracy A:
     // The actual time must be in [R-A, R+A]
     // This narrows our current range [minPossible, maxPossible] if:
@@ -301,8 +305,8 @@ function calculateHelpfulRanges(minPossible, maxPossible) {
     // If actual time is maxPossible, telescope shows: maxPossible + [-A, +A]
     // So possible telescope readings: [minPossible-A, maxPossible+A]
 
-    const minPossibleReading = Math.max(0, minPossible - currentAccuracy);
-    const maxPossibleReading = maxPossible + currentAccuracy;
+    const minPossibleReading = Math.max(0, minPossible - effectiveAccuracy);
+    const maxPossibleReading = maxPossible + effectiveAccuracy;
 
     // For a reading R to narrow our estimate:
     // Case 1: R+A < maxPossible (narrows the upper bound)
@@ -314,8 +318,8 @@ function calculateHelpfulRanges(minPossible, maxPossible) {
     // R+A >= maxPossible AND R-A <= minPossible
     // Which means: maxPossible - A <= R <= minPossible + A
 
-    const unhelpfulMin = maxPossible - currentAccuracy;
-    const unhelpfulMax = minPossible + currentAccuracy;
+    const unhelpfulMin = maxPossible - effectiveAccuracy;
+    const unhelpfulMax = minPossible + effectiveAccuracy;
 
     // Check if there's actually an unhelpful range
     if (unhelpfulMin <= unhelpfulMax) {
@@ -325,7 +329,7 @@ function calculateHelpfulRanges(minPossible, maxPossible) {
         if (minPossibleReading < unhelpfulMin) {
             ranges.push({
                 min: minPossibleReading,
-                max: unhelpfulMin - 0.1,
+                max: unhelpfulMin - DISPLAY_STEP,
                 description: "Low readings (narrow the maximum)"
             });
         }
@@ -333,7 +337,7 @@ function calculateHelpfulRanges(minPossible, maxPossible) {
         // High helpful readings (those that narrow the lower bound)
         if (unhelpfulMax < maxPossibleReading) {
             ranges.push({
-                min: unhelpfulMax + 0.1,
+                min: unhelpfulMax + DISPLAY_STEP,
                 max: maxPossibleReading,
                 description: "High readings (narrow the minimum)"
             });
@@ -379,7 +383,7 @@ function updatePrediction() {
     }
 
     if (observations.length === 0) {
-        document.getElementById('results').style.display = 'none';
+        document.getElementById('results').hidden = true;
         document.getElementById('observationsList').innerHTML = '<div class="no-help">No observations made yet.</div>';
         latestPrediction = null;
         updateSubmitUI();
@@ -419,7 +423,7 @@ function updatePrediction() {
     }
 
     // Display results
-    document.getElementById('results').style.display = 'block';
+    document.getElementById('results').hidden = false;
     document.getElementById('range').textContent = `${minPossible.toFixed(1)} - ${maxPossible.toFixed(1)} minutes`;
 
     // Make the current prediction available to the community submit form.
@@ -449,13 +453,13 @@ function updatePrediction() {
         helpfulRangesHtml += helpfulRanges.filter(r => r.min !== -1).map(range =>
             `<div class="range-item">
                         <span class="range-highlight">${range.min.toFixed(1)} - ${range.max.toFixed(1)} min</span>
-                        <span style="color: #888; margin-left: 10px;">${range.description}</span>
+                        <span class="range-description">${range.description}</span>
                     </div>`
         ).join('');
 
         // Add debug info (can be removed in production)
-        const baseAccuracy = parseInt(document.getElementById('telescopeType').value);
-        const effectiveAccuracyDisplay = baseAccuracy + ROUNDING_UNCERTAINTY;
+        const baseAccuracy = parseInt(document.getElementById('telescopeType').value, 10);
+        const effectiveAccuracyDisplay = effectiveTelescopeAccuracy(baseAccuracy);
         const debugInfo = `
                     <div class="debug-info">
                         Current estimate: ${minPossible.toFixed(1)} - ${maxPossible.toFixed(1)} min<br>
@@ -477,7 +481,7 @@ function updatePrediction() {
                         Observation ${index + 1}: ${obs.observedTime} min
                         (${obs.telescopeType} ±${obs.accuracy.toFixed(1)}, ${timeLabel})
                     </div>
-                    <button class="remove-btn" onclick="removeObservation(${index})">Remove</button>
+                    <button class="remove-btn" type="button" data-remove-index="${index}">Remove</button>
                 </div>`;
     }).join('');
 
@@ -493,6 +497,9 @@ function resetObservations() {
 }
 
 // Allow Enter key to add observation
+document.getElementById('addBtn').addEventListener('click', addObservation);
+document.getElementById('resetBtn').addEventListener('click', resetObservations);
+
 document.getElementById('telescopeTime').addEventListener('keypress', function(e) {
     if (e.key === 'Enter' && !isProcessing) {
         e.preventDefault();
@@ -510,6 +517,17 @@ if (usernameInput) {
         }
     });
 }
+
+const submitButton = document.getElementById('submitBtn');
+if (submitButton) {
+    submitButton.addEventListener('click', submitPrediction);
+}
+
+document.getElementById('observationsList').addEventListener('click', function(e) {
+    const button = e.target.closest('[data-remove-index]');
+    if (!button) return;
+    removeObservation(Number(button.dataset.removeIndex));
+});
 
 // Update the timer every second
 setInterval(updatePrediction, 1000);

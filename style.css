@@ -1,83 +1,127 @@
+:root {
+    --surface-page: #1a1a1a;
+    --surface-panel: #2a2a2a;
+    --surface-section: #2a3f4d;
+    --surface-remote: #1a3a4d;
+    --surface-input: #3a3a3a;
+    --surface-result: #353535;
+    --surface-nested: #1a2a35;
+    --surface-warning: #3a2a1a;
+    --text-primary: #e0e0e0;
+    --text-heading: #f0f0f0;
+    --text-muted: #888888;
+    --text-subtle: #aaaaaa;
+    --text-secondary: #b0b0b0;
+    --text-info: #a0c5e0;
+    --text-consensus: #9fb8c7;
+    --text-strong: #cfe6f5;
+    --text-on-action: #ffffff;
+    --accent-primary: #7fd4ff;
+    --accent-secondary: #6ac5f7;
+    --action-default: #4a7c94;
+    --action-hover: #5a9fd4;
+    --action-disabled: #555555;
+    --status-error: #c44444;
+    --status-error-hover: #d66666;
+    --status-success: #6ac56a;
+    --status-warning: #daa520;
+    --border-default: #444444;
+    --border-section: #3a5f7d;
+    --border-remote: #2a5a7d;
+    --border-warning: #5a3a2a;
+    --shadow-container: rgba(0, 0, 0, 0.5);
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-8: 32px;
+}
+
+[hidden] {
+    display: none !important;
+}
+
 body {
     font-family: Arial, sans-serif;
     max-width: 700px;
     margin: 30px auto;
-    padding: 20px;
-    background-color: #1a1a1a;
-    color: #e0e0e0;
+    padding: var(--space-5);
+    background-color: var(--surface-page);
+    color: var(--text-primary);
 }
 .container {
-    background-color: #2a2a2a;
+    background-color: var(--surface-panel);
     padding: 30px;
     border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    box-shadow: 0 2px 10px var(--shadow-container);
 }
 h1 {
-    color: #f0f0f0;
+    color: var(--text-heading);
     text-align: center;
     margin-bottom: 10px;
 }
 .subtitle {
     text-align: center;
-    color: #888;
+    color: var(--text-muted);
     font-size: 14px;
-    margin-bottom: 20px;
+    margin-bottom: var(--space-5);
 }
 .remote-timer-update {
-    background-color: #1a3a4d;
-    border: 2px solid #2a5a7d;
-    padding: 20px;
+    background-color: var(--surface-remote);
+    border: 2px solid var(--border-remote);
+    padding: var(--space-5);
     border-radius: 10px;
-    margin-bottom: 20px;
+    margin-bottom: var(--space-5);
     text-align: center;
 }
 .remote-timer-update h2 {
     margin-top: 0;
-    color: #7fd4ff;
+    color: var(--accent-primary);
     font-size: 20px;
 }
 .remote-range {
     font-size: 28px;
     font-weight: bold;
-    color: #7fd4ff;
+    color: var(--accent-primary);
     margin: 15px 0;
 }
 .remote-info {
     font-size: 12px;
-    color: #aaa;
+    color: var(--text-subtle);
     margin-top: 10px;
 }
 .remote-offline {
-    color: #c44444;
+    color: var(--status-error);
     font-style: italic;
 }
 .input-group {
-    margin: 20px 0;
+    margin: var(--space-5) 0;
 }
 label {
     display: block;
     margin-bottom: 5px;
-    color: #b0b0b0;
+    color: var(--text-secondary);
 }
 input, select {
     width: 100%;
     padding: 10px;
-    border: 1px solid #444;
+    border: 1px solid var(--border-default);
     border-radius: 5px;
     box-sizing: border-box;
     font-size: 16px;
-    background-color: #3a3a3a;
-    color: #e0e0e0;
+    background-color: var(--surface-input);
+    color: var(--text-primary);
 }
 input:focus, select:focus {
     outline: none;
-    border-color: #5a9fd4;
+    border-color: var(--action-hover);
 }
 button {
     width: 100%;
-    padding: 12px;
-    background-color: #4a7c94;
-    color: white;
+    padding: var(--space-3);
+    background-color: var(--action-default);
+    color: var(--text-on-action);
     border: none;
     border-radius: 5px;
     font-size: 16px;
@@ -85,79 +129,87 @@ button {
     transition: background-color 0.3s;
 }
 button:hover {
-    background-color: #5a9fd4;
+    background-color: var(--action-hover);
 }
 button:disabled {
-    background-color: #555;
+    background-color: var(--action-disabled);
     cursor: not-allowed;
 }
 .results {
-    margin-top: 20px;
-    padding: 20px;
-    background-color: #353535;
+    margin-top: var(--space-5);
+    padding: var(--space-5);
+    background-color: var(--surface-result);
     border-radius: 5px;
-    border: 1px solid #444;
+    border: 1px solid var(--border-default);
+}
+.results-title {
+    text-align: center;
+    margin-top: 0;
 }
 .range {
     text-align: center;
-    color: #6ac5f7;
-    margin: 20px 0;
+    color: var(--accent-secondary);
+    margin: var(--space-5) 0;
     font-size: 24px;
     font-weight: bold;
     padding: 15px;
-    background-color: #2a3f4d;
+    background-color: var(--surface-section);
     border-radius: 8px;
-    border: 2px solid #4a7c94;
+    border: 2px solid var(--action-default);
 }
 .helpful-ranges {
-    margin-top: 20px;
+    margin-top: var(--space-5);
     padding: 15px;
-    background-color: #2a3f4d;
+    background-color: var(--surface-section);
     border-radius: 8px;
-    border: 1px solid #3a5f7d;
+    border: 1px solid var(--border-section);
 }
 .helpful-ranges h3 {
     margin-top: 0;
-    color: #6ac5f7;
+    color: var(--accent-secondary);
     font-size: 16px;
 }
 .range-item {
-    padding: 8px;
+    padding: var(--space-2);
     margin: 5px 0;
-    background-color: #1a2a35;
+    background-color: var(--surface-nested);
     border-radius: 5px;
     font-size: 14px;
-    color: #a0c5e0;
+    color: var(--text-info);
 }
 .range-highlight {
-    color: #7fd4ff;
+    color: var(--accent-primary);
     font-weight: bold;
+}
+.range-description {
+    color: var(--text-muted);
+    margin-left: 10px;
 }
 #live-timer {
     font-weight: normal;
     font-size: 0.9em;
-    color: #aaa;
+    color: var(--text-subtle);
     margin-left: 10px;
     font-style: italic;
 }
 .observations {
-    margin-top: 20px;
+    margin-top: var(--space-5);
     font-size: 14px;
-    color: #b0b0b0;
+    color: var(--text-secondary);
     padding: 15px;
-    background-color: #2a3f4d;
+    background-color: var(--surface-section);
     border-radius: 8px;
-    border: 1px solid #3a5f7d;
+    border: 1px solid var(--border-section);
 }
 .observations h3 {
     margin-top: 0;
-    color: #6ac5f7;
+    color: var(--accent-secondary);
     font-size: 16px;
 }
 .observation-item {
     padding: 10px;
     margin: 5px 0;
-    background-color: #2a2a2a;
+    background-color: var(--surface-panel);
     border-radius: 5px;
     display: flex;
     justify-content: space-between;
@@ -167,75 +219,75 @@ button:disabled {
     flex: 1;
 }
 .remove-btn {
-    background-color: #c44444;
+    background-color: var(--status-error);
     padding: 5px 10px;
     font-size: 12px;
     width: auto;
     margin-left: 10px;
 }
 .remove-btn:hover {
-    background-color: #d66666;
+    background-color: var(--status-error-hover);
 }
 .reset-btn {
-    background-color: #c44444;
+    background-color: var(--status-error);
     margin-top: 10px;
 }
 .reset-btn:hover {
-    background-color: #d66666;
+    background-color: var(--status-error-hover);
 }
 .info {
-    background-color: #2a3f4d;
+    background-color: var(--surface-section);
     padding: 15px;
     border-radius: 5px;
-    margin-bottom: 20px;
+    margin-bottom: var(--space-5);
     font-size: 14px;
-    color: #a0c5e0;
-    border: 1px solid #3a5f7d;
+    color: var(--text-info);
+    border: 1px solid var(--border-section);
 }
 .no-help {
-    color: #888;
+    color: var(--text-muted);
     font-style: italic;
     text-align: center;
     padding: 10px;
 }
 .unhelpful-warning {
-    background-color: #3a2a1a;
-    border: 1px solid #5a3a2a;
+    background-color: var(--surface-warning);
+    border: 1px solid var(--border-warning);
     padding: 10px;
     margin-bottom: 10px;
     border-radius: 5px;
-    color: #daa520;
+    color: var(--status-warning);
     font-size: 13px;
 }
 .debug-info {
     margin-top: 10px;
     padding: 10px;
-    background-color: #1a1a1a;
+    background-color: var(--surface-page);
     border-radius: 5px;
     font-size: 12px;
-    color: #888;
+    color: var(--text-muted);
     font-family: monospace;
 }
 .remote-consensus {
     font-size: 13px;
-    color: #9fb8c7;
-    margin-top: 4px;
+    color: var(--text-consensus);
+    margin-top: var(--space-1);
 }
 .submit-community {
-    margin-top: 20px;
-    padding: 20px;
-    background-color: #2a3f4d;
+    margin-top: var(--space-5);
+    padding: var(--space-5);
+    background-color: var(--surface-section);
     border-radius: 8px;
-    border: 1px solid #3a5f7d;
+    border: 1px solid var(--border-section);
 }
 .submit-community h3 {
     margin-top: 0;
-    color: #6ac5f7;
+    color: var(--accent-secondary);
     font-size: 16px;
 }
 .submit-hint {
     font-size: 13px;
-    color: #a0c5e0;
+    color: var(--text-info);
     margin-bottom: 10px;
 }
 .submit-status {
@@ -244,21 +296,21 @@ button:disabled {
     min-height: 18px;
 }
 .submit-status.success {
-    color: #6ac56a;
+    color: var(--status-success);
 }
 .submit-status.error {
-    color: #d66666;
+    color: var(--status-error-hover);
 }
 .community-submissions {
-    margin-bottom: 20px;
-    padding: 20px;
-    background-color: #2a3f4d;
+    margin-bottom: var(--space-5);
+    padding: var(--space-5);
+    background-color: var(--surface-section);
     border-radius: 8px;
-    border: 1px solid #3a5f7d;
+    border: 1px solid var(--border-section);
 }
 .community-submissions h2 {
     margin-top: 0;
-    color: #6ac5f7;
+    color: var(--accent-secondary);
     font-size: 18px;
 }
 .submission-item {
@@ -267,24 +319,24 @@ button:disabled {
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
-    padding: 8px 10px;
+    padding: var(--space-2) 10px;
     margin: 5px 0;
-    background-color: #1a2a35;
+    background-color: var(--surface-nested);
     border-radius: 5px;
     font-size: 14px;
-    color: #a0c5e0;
+    color: var(--text-info);
 }
 .submission-name {
     font-weight: bold;
-    color: #7fd4ff;
+    color: var(--accent-primary);
 }
 .submission-window {
-    color: #cfe6f5;
+    color: var(--text-strong);
 }
 .submission-time {
-    color: #888;
+    color: var(--text-muted);
     font-size: 12px;
 }
 .submission-item.expired {
     opacity: 0.5;
-} 
+}

@@ -25,6 +25,7 @@ const USERNAME_MAX = 20;
 const HARD_TTL_MS = 6 * 60 * 60 * 1000;   // drop submissions older than 6h (self-cleaning)
 const COOLDOWN_MS = 10 * 1000;            // one client may not resubmit faster than this
 const LIST_CAP = 100;                     // newest-N shown in the browse list
+const MAX_SUBMIT_BODY_BYTES = 2048;
 const MIN_IQR_BAND_MS = 3 * 60000;        // outlier fence never tighter than 3 min (keep near-agreeing rows)
 const ALLOWED_TELESCOPES = ['Wooden', 'Teak', 'Mahogany'];
 
@@ -45,6 +46,50 @@ function json(body, status, origin) {
     status,
     headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
   });
+}
+
+async function readJsonBody(request, maxBytes) {
+  const lengthHeader = request.headers.get('Content-Length');
+  if (lengthHeader != null) {
+    const declaredLength = Number(lengthHeader);
+    if (!Number.isFinite(declaredLength) || declaredLength < 0)
+      return { error: 'Invalid Content-Length header.', status: 400 };
+    if (declaredLength > maxBytes)
+      return { error: `Request body is too large (max ${maxBytes} bytes).`, status: 413 };
+  }
+
+  if (!request.body)
+    return { error: 'Invalid JSON body.', status: 400 };
+
+  const reader = request.body.getReader();
+  const decoder = new TextDecoder();
+  let total = 0;
+  let text = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        return { error: `Request body is too large (max ${maxBytes} bytes).`, status: 413 };
+      }
+
+      text += decoder.decode(value, { stream: true });
+    }
+
+    text += decoder.decode();
+  } catch {
+    return { error: 'Invalid request body.', status: 400 };
+  }
+
+  try {
+    return { body: JSON.parse(text) };
+  } catch {
+    return { error: 'Invalid JSON body.', status: 400 };
+  }
 }
 
 // Per-client key for dedupe + cooldown. Keyed on the TRUE connecting IP only
@@ -92,12 +137,9 @@ function quantile(sorted, q) {
 }
 
 async function handleSubmit(request, env, origin) {
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return json({ ok: false, error: 'Invalid JSON body.' }, 400, origin);
-  }
+  const parsed = await readJsonBody(request, MAX_SUBMIT_BODY_BYTES);
+  if (parsed.error) return json({ ok: false, error: parsed.error }, parsed.status, origin);
+  const body = parsed.body;
 
   const username = sanitizeUsername(body.username);
   if (!username) return json({ ok: false, error: `A name is required (1-${USERNAME_MAX} characters).` }, 400, origin);

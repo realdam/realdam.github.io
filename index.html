@@ -9,7 +9,6 @@
 <body>
     <div class="container">
         <h1>Shooting Star Timer</h1>
-        
         <!-- Remote timer section -->
         <div class="remote-timer-update" id="remoteTimerUpdate">
             <h2>Community Consensus Timer</h2>
@@ -22,7 +21,7 @@
         </div>
 
         <!-- Community submissions list (shown only when REMOTE_API is configured) -->
-        <div class="community-submissions" id="communitySubmissions" style="display: none;">
+        <div class="community-submissions" id="communitySubmissions" hidden>
             <h2>Community Predictions</h2>
             <div id="submissionsList"><div class="no-help">No submissions yet.</div></div>
         </div>
@@ -32,7 +31,7 @@
             <div class="info">
                 <strong>How it works:</strong> Enter the time shown by the telescope. Each reading helps narrow down the actual time. The tool shows which future readings would help improve the prediction.
             </div>
-            
+
             <div class="input-group">
                 <label for="telescopeType">Telescope Type:</label>
                 <select id="telescopeType">
@@ -41,19 +40,19 @@
                     <option value="2">Mahogany (±2 minutes)</option>
                 </select>
             </div>
-            
+
             <div class="input-group">
                 <label for="telescopeTime">Telescope Reading (minutes):</label>
-                <input type="number" id="telescopeTime" placeholder="Enter time shown by telescope">
+                <input type="number" id="telescopeTime" min="0" step="1" inputmode="numeric" placeholder="Enter time shown by telescope">
             </div>
-            
-            <button id="addBtn" onclick="addObservation()">Add Observation</button>
-            <button class="reset-btn" onclick="resetObservations()">Reset All</button>
-            
-            <div id="results" class="results" style="display: none;">
-                <h2 style="text-align: center; margin-top: 0;">Your Predicted Time Range</h2>
+
+            <button id="addBtn" type="button">Add Observation</button>
+            <button id="resetBtn" class="reset-btn" type="button">Reset All</button>
+
+            <div id="results" class="results" hidden>
+                <h2 class="results-title">Your Predicted Time Range</h2>
                 <div class="range" id="range">--</div>
-                
+
                 <div class="helpful-ranges" id="helpfulRanges">
                     <h3>Helpful Future Observations:</h3>
                     <div id="helpfulRangesList"></div>
@@ -61,14 +60,14 @@
             </div>
 
             <!-- Submit your prediction to the community timer (shown only when REMOTE_API is configured) -->
-            <div class="submit-community" id="submitCommunity" style="display: none;">
+            <div class="submit-community" id="submitCommunity" hidden>
                 <h3>Submit Your Prediction</h3>
                 <div class="submit-hint" id="submitHint">Add a telescope observation above to generate a prediction you can submit.</div>
                 <div class="input-group">
                     <label for="username">Your name (as you want it shown):</label>
                     <input type="text" id="username" maxlength="20" placeholder="e.g. Zezima">
                 </div>
-                <button id="submitBtn" onclick="submitPrediction()" disabled>Submit to Community Timer</button>
+                <button id="submitBtn" type="button" disabled>Submit to Community Timer</button>
                 <div class="submit-status" id="submitStatus"></div>
             </div>
 
